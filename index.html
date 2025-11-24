@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>MERCANIIMMM</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
@@ -22,36 +22,35 @@
     .evet-btn{ left:8px; top:8px; color:#b01414; }
     .kacan-buton{ left: calc(100% - 150px - 8px); top:8px; transition:left .12s ease, top .12s ease; will-change:left, top; touch-action:none; }
 
-    /* Yerel GIF için basit sınırlayıcı */
     .gif-local{ display:block; margin:0 auto; max-width:360px; width:90vw; height:auto; border-radius:10px; }
+
+    .warning-text{
+      white-space: nowrap;
+      font-size: 3vw;
+      font-weight: 700;
+      color: #b01414;
+    }
 
     [hidden]{display:none!important;}
   </style>
 </head>
 <body>
 
-  <!-- EKRAN 1 -->
   <section id="page1">
     <h3>BARIŞALIMMIII???</h3>
 
-    <img class="hero-img"
-         src="kedii.jpg"
-         alt="gül veren kedi" loading="lazy" decoding="async">
+    <img class="hero-img" src="kedii.jpg" alt="gül veren kedi" loading="lazy" decoding="async">
 
     <div class="cta-area" id="cta">
       <button id="yesBtn" type="button" class="btn btn-light evet-btn" onclick="showPage('page2')">EVET</button>
-      <button id="noBtn"  type="button" class="btn btn-danger kacan-buton">HAYIR</button>
+      <button id="noBtn" type="button" class="btn btn-danger kacan-buton">HAYIR</button>
     </div>
   </section>
 
-  <!-- EKRAN 2 -->
   <section id="page2" hidden class="text-center">
     <h3 style="margin-top:12vh;">SENİ ÇOOK SEVİYORUUUMMM</h3>
 
-    <!-- Repodaki GIF -->
-    <img class="gif-local"
-         src="catttt.gif"
-         alt="mutlu zıplayan kedi GIF">
+    <img class="gif-local" src="catttt.gif" alt="mutlu zıplayan kedi GIF">
 
     <div class="d-flex justify-content-center mt-3">
       <button class="btn btn-outline-light" onclick="showPage('page1')">Geri dön</button>
@@ -59,8 +58,11 @@
   </section>
 
   <script>
+    let hoverCount = 0;
+    let clickCount = 0;
+
     (function(){
-      const area  = document.getElementById('cta');
+      const area = document.getElementById('cta');
       const noBtn = document.getElementById('noBtn');
 
       function bounds(){
@@ -68,42 +70,71 @@
         const b = noBtn.getBoundingClientRect();
         return { maxX: a.width - b.width - 4, maxY: a.height - b.height - 4 };
       }
-      function moveAway(px, py, forceRandom=false){
-        const a = area.getBoundingClientRect();
-        const b = noBtn.getBoundingClientRect();
-        const cx = b.left + b.width/2, cy = b.top + b.height/2;
-        const dx = cx - px, dy = cy - py, dist = Math.hypot(dx, dy);
-        const {maxX, maxY} = bounds();
-        const THRESH = 120, STEP = 160;
 
-        if(forceRandom || dist < THRESH){
-          const ux = dist ? dx/dist : (Math.random()*2-1);
-          const uy = dist ? dy/dist : (Math.random()*2-1);
-          let nx = Math.max(0, Math.min(noBtn.offsetLeft + ux*STEP, maxX));
-          let ny = Math.max(0, Math.min(noBtn.offsetTop  + uy*STEP, maxY));
-          const ax = a.left + nx + noBtn.offsetWidth/2;
-          const ay = a.top  + ny + noBtn.offsetHeight/2;
-          if(!forceRandom && Math.hypot(ax - px, ay - py) < THRESH/1.6){
-            nx = Math.random()*maxX; ny = Math.random()*maxY;
-          }
-          noBtn.style.left = nx + 'px'; noBtn.style.top = ny + 'px';
-        }
+      function moveAway(px, py, forceRandom=false){
+        const { maxX, maxY } = bounds();
+        let nx = Math.random() * maxX;
+        let ny = Math.random() * maxY;
+
+        noBtn.style.left = nx + 'px';
+        noBtn.style.top = ny + 'px';
       }
-      area.addEventListener('mousemove', (e)=> moveAway(e.clientX, e.clientY));
-      noBtn.addEventListener('mouseenter', (e)=> moveAway(e.clientX, e.clientY, true));
-      noBtn.addEventListener('touchstart', (e)=>{ const t=e.touches[0]; moveAway(t.clientX, t.clientY, true); e.preventDefault(); }, {passive:false});
-      window.addEventListener('resize', ()=>{ const {maxX,maxY}=bounds(); noBtn.style.left=Math.max(0,Math.min(noBtn.offsetLeft,maxX))+'px'; noBtn.style.top=Math.max(0,Math.min(noBtn.offsetTop,maxY))+'px'; });
+
+      area.addEventListener('mousemove', (e) => {
+        if(hoverCount < 5){
+          const rect = noBtn.getBoundingClientRect();
+          const dx = e.clientX - (rect.left + rect.width/2);
+          const dy = e.clientY - (rect.top + rect.height/2);
+          const dist = Math.hypot(dx, dy);
+          if(dist < 120){
+            moveAway(e.clientX, e.clientY);
+          }
+        }
+      });
+
+      function showWarning(){
+        noBtn.hidden = true;
+        const replace = document.createElement('div');
+        replace.className = 'warning-text';
+        replace.style.position = 'absolute';
+        replace.style.left = '50%';
+        replace.style.top = '50%';
+        replace.style.transform = 'translate(-50%, -50%)';
+        replace.textContent = 'SUSS BARIŞCAKSINN!!';
+        area.appendChild(replace);
+      }
+
+      noBtn.addEventListener('mouseenter', () => {
+        hoverCount++;
+        if(hoverCount >= 5) showWarning();
+        else moveAway();
+      });
+
+      noBtn.addEventListener('click', () => {
+        clickCount++;
+        if(clickCount >= 5) showWarning();
+      });
+
+      noBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        hoverCount++;
+        if(hoverCount >= 5) showWarning();
+        else moveAway();
+      }, {passive:false});
+
+      window.addEventListener('resize', () => {
+        const { maxX, maxY } = bounds();
+        noBtn.style.left = Math.min(noBtn.offsetLeft, maxX) + 'px';
+        noBtn.style.top = Math.min(noBtn.offsetTop, maxY) + 'px';
+      });
     })();
 
     function showPage(id){
-      const p1 = document.getElementById('page1');
-      const p2 = document.getElementById('page2');
-      p1.hidden = true; p2.hidden = true;
+      document.getElementById('page1').hidden = true;
+      document.getElementById('page2').hidden = true;
       document.getElementById(id).hidden = false;
       document.title = 'MERCANIIMMM';
     }
   </script>
 </body>
 </html>
-
-
